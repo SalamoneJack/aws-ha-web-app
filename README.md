@@ -8,11 +8,16 @@
 
 A production-pattern highly available web application built on AWS: Application Load Balancer + Auto Scaling Group spanning two Availability Zones, with a Multi-AZ RDS instance in private subnets. Demonstrates the core AWS Solutions Architect Associate architecture: design for failure, remove single points of failure, and scale horizontally.
 
-> ### Reference lab â€” not the active portfolio focus
+> ### Reference lab — not the active portfolio focus
 >
 > This portfolio centers on **network engineering** (BGP, IPSec, VPC topology, observability, reusable VPC modules). `ha-web-app` is included as a reference implementation of the AWS HA pattern any cloud engineer should know, but it isn't the differentiating asset.
 >
-> Architecture was deployed and verified on 2026-05-28, then destroyed. See [`evidence/`](evidence/) for the AWS describe-* evidence of the live deployment.
+> Architecture was deployed and verified on 2026-05-28, then destroyed. See [`Documentation/`](Documentation/) for the AWS describe-* evidence of the live deployment.
+
+## Repository Tour
+
+- **[`terraform/`](terraform/)** — VPC, ALB, ASG, RDS Multi-AZ, NAT GW, security groups
+- **[`Documentation/`](Documentation/)** — deployment evidence (AWS describes captured live), architecture
 
 ## The Problem
 
@@ -22,37 +27,22 @@ Single-instance deployments are a liability. An AZ outage, hardware failure, or 
 
 ## Architecture
 
-```
-                        Internet
-                           â”‚
-                    â”Œâ”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”
-                    â”‚     ALB      â”‚
-                    â”‚  (2 AZs)    â”‚
-                    â””â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”˜
-               â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-               â”‚                      â”‚
-    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-    â”‚  Public Subnet A    â”‚ â”‚  Public Subnet B     â”‚
-    â”‚  us-east-1a         â”‚ â”‚  us-east-1b           â”‚
-    â”‚                     â”‚ â”‚                      â”‚
-    â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”‚ â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”‚
-    â”‚  â”‚  EC2 (ASG)    â”‚  â”‚ â”‚  â”‚  EC2 (ASG)    â”‚  â”‚
-    â”‚  â”‚  Apache+AZ ID â”‚  â”‚ â”‚  â”‚  Apache+AZ ID â”‚  â”‚
-    â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â”‚ â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â”‚
-    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-               â”‚                       â”‚
-    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-    â”‚  Private Subnet A   â”‚ â”‚  Private Subnet B     â”‚
-    â”‚  us-east-1a         â”‚ â”‚  us-east-1b           â”‚
-    â”‚                     â”‚ â”‚                      â”‚
-    â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”‚ â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”‚
-    â”‚  â”‚  RDS Primary  â”‚  â”‚ â”‚  â”‚  RDS Standby  â”‚  â”‚
-    â”‚  â”‚  (active)     â”‚  â”‚ â”‚  â”‚  (sync repl.) â”‚  â”‚
-    â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â”‚ â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â”‚
-    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-```
 
-*Full diagram: [docs/architecture.png](docs/architecture.png)*
+
+A single VPC with public and private subnets across two Availability Zones, deployed as a 3-tier highly available web application:
+
+| Layer | Component | Spans |
+|---|---|---|
+| Load balancing | Application Load Balancer | 2 public subnets, 2 AZs |
+| Compute | Auto Scaling Group (min 2, max 4) | 2 private subnets, 2 AZs |
+| Data | RDS MySQL Multi-AZ | 2 private subnets (sync standby in second AZ) |
+| Egress | NAT Gateway | 1 public subnet |
+| Web tier identity | Apache + simple page showing AZ | Each EC2 instance |
+
+The ALB health-checks each EC2 on port 80; unhealthy targets are removed from the rotation within ~30 seconds. The ASG re-launches replacement instances if an AZ fails. RDS Multi-AZ promotes the standby on failover, keeping the same endpoint DNS.
+
+
+*Full diagram: [Documentation/architecture.md](Documentation/architecture.md)*
 
 | Component | Configuration |
 |-----------|--------------|
@@ -68,7 +58,7 @@ Single-instance deployments are a liability. An AZ outage, hardware failure, or 
 
 ### ALB Target Group Health Checks
 
-The ALB continuously health-checks each EC2 target on port 80. If a target fails two consecutive checks, the ALB stops sending traffic to it and routes all requests to healthy targets â€” automatically, with no manual intervention.
+The ALB continuously health-checks each EC2 target on port 80. If a target fails two consecutive checks, the ALB stops sending traffic to it and routes all requests to healthy targets — automatically, with no manual intervention.
 
 ### Auto Scaling Group Across AZs
 
@@ -76,7 +66,7 @@ The ASG is configured with `vpc_zone_identifier` pointing to both public subnets
 
 ### RDS Multi-AZ
 
-Multi-AZ RDS maintains a synchronous standby replica in the second AZ. During failover, AWS updates the DNS endpoint to point to the standby â€” no IP change, connection strings stay the same. Promotion typically completes in 60â€“120 seconds.
+Multi-AZ RDS maintains a synchronous standby replica in the second AZ. During failover, AWS updates the DNS endpoint to point to the standby — no IP change, connection strings stay the same. Promotion typically completes in 60â€“120 seconds.
 
 ### What the User Data Script Does
 
@@ -99,7 +89,7 @@ terraform init
 terraform apply
 ```
 
-The ALB DNS name appears in outputs. Visit it in a browser â€” refresh to see the AZ alternating.
+The ALB DNS name appears in outputs. Visit it in a browser — refresh to see the AZ alternating.
 
 ## Deployment
 
@@ -123,7 +113,7 @@ db_password = "choose-a-strong-password"
 1. Note which AZ is serving requests
 2. Stop one EC2 instance in that AZ via the console
 3. ALB routes to the healthy instance while ASG launches a replacement
-4. Refresh page â€” traffic continues uninterrupted to the other AZ
+4. Refresh page — traffic continues uninterrupted to the other AZ
 
 ### Test 2: ALB Health Check Failure Simulation
 
@@ -148,7 +138,7 @@ From the RDS console: Actions â†’ Reboot with failover. RDS promotes the st
 | NAT Gateway (for private subnets) | ~$32 |
 | **Estimated Total** | **~$78/mo** |
 
-Run `terraform destroy` when done. This is the most expensive lab â€” RDS and NAT Gateway are the big line items.
+Run `terraform destroy` when done. This is the most expensive lab — RDS and NAT Gateway are the big line items.
 
 ## Production Considerations
 
@@ -161,13 +151,13 @@ Run `terraform destroy` when done. This is the most expensive lab â€” RDS a
 
 ## What I Learned
 
-- ALB health checks and ASG health checks are separate â€” both need to be configured correctly for automatic recovery to work end-to-end
+- ALB health checks and ASG health checks are separate — both need to be configured correctly for automatic recovery to work end-to-end
 - RDS Multi-AZ is synchronous replication, not async (like a Read Replica). That's why failover is fast and data loss is zero, but it doubles the cost
-- NAT Gateway charges $0.045/hr regardless of traffic â€” it's the "hidden" cost in any multi-AZ setup with private subnets. At scale, you want VPC endpoints for AWS services to reduce that cost
-- The AZ identifier in the Apache response is what proves load balancing is actually happening â€” without it you're just trusting that the ALB is doing its job
+- NAT Gateway charges $0.045/hr regardless of traffic — it's the "hidden" cost in any multi-AZ setup with private subnets. At scale, you want VPC endpoints for AWS services to reduce that cost
+- The AZ identifier in the Apache response is what proves load balancing is actually happening — without it you're just trusting that the ALB is doing its job
 
 ## Related Projects
 
-- [aws-multi-vpc-hub-spoke](https://github.com/SalamoneJack/aws-multi-vpc-hub-spoke) â€” Network segmentation this app would live inside
-- [terraform-aws-vpc-module](https://github.com/SalamoneJack/terraform-aws-vpc-module) â€” The reusable VPC module used here
-- [aws-network-monitoring](https://github.com/SalamoneJack/aws-network-monitoring) â€” Observability for this application tier
+- [aws-multi-vpc-hub-spoke](https://github.com/SalamoneJack/aws-multi-vpc-hub-spoke) — Network segmentation this app would live inside
+- [terraform-aws-vpc-module](https://github.com/SalamoneJack/terraform-aws-vpc-module) — The reusable VPC module used here
+- [aws-network-monitoring](https://github.com/SalamoneJack/aws-network-monitoring) — Observability for this application tier
