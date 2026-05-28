@@ -4,15 +4,15 @@
 ![Terraform](https://img.shields.io/badge/Terraform-7B42BC?logo=terraform&logoColor=white)
 ![ALB](https://img.shields.io/badge/ALB-Load_Balancer-informational)
 ![Multi--AZ](https://img.shields.io/badge/Multi--AZ-HA-brightgreen)
-![Status](https://img.shields.io/badge/Status-Complete-brightgreen)
+![Status](https://img.shields.io/badge/Status-In--Progress-yellow)
 
 A production-pattern highly available web application built on AWS: Application Load Balancer + Auto Scaling Group spanning two Availability Zones, with a Multi-AZ RDS instance in private subnets. Demonstrates the core HA architecture pattern: design for failure, remove single points of failure, and scale horizontally.
 
-> ### Deployed and verified
+> ### Code complete; live verification pending
 >
-> Live ALB + ASG + RDS Multi-AZ stack deployed to AWS on 2026-05-28, captured via `aws describe-*` API across every component (target group health, ASG configuration, RDS Multi-AZ confirmation, NAT Gateway, security groups), then destroyed.
+> Terraform deploys the full stack (VPC, ALB, ASG, RDS Multi-AZ, NAT Gateway across 2 AZs). Initial AWS deployment on 2026-05-28 hit DNS-related issues during RDS provisioning that left the stack half-deployed (ALB up, targets unhealthy, RDS not finalized). End-to-end traffic-serving validation is the remaining work.
 >
-> See [`Documentation/`](Documentation/) for the live capture evidence and the [Mermaid architecture diagram](Documentation/architecture.md).
+> See [`Documentation/`](Documentation/) for the [Mermaid architecture diagram](Documentation/architecture.md) and the `aws describe-*` captures from the partial deployment.
 
 ## Repository Tour
 
