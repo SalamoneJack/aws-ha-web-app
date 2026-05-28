@@ -6,11 +6,13 @@
 ![Multi--AZ](https://img.shields.io/badge/Multi--AZ-HA-brightgreen)
 ![Status](https://img.shields.io/badge/Status-Complete-brightgreen)
 
-A production-pattern highly available web application built on AWS: Application Load Balancer + Auto Scaling Group spanning two Availability Zones, with a Multi-AZ RDS instance in private subnets. Demonstrates the core AWS Solutions Architect Associate architecture: design for failure, remove single points of failure, and scale horizontally.
+A production-pattern highly available web application built on AWS: Application Load Balancer + Auto Scaling Group spanning two Availability Zones, with a Multi-AZ RDS instance in private subnets. Demonstrates the core HA architecture pattern: design for failure, remove single points of failure, and scale horizontally.
 
-> ### Reference lab
-> 
-> Architecture was deployed and verified on 2026-05-28, then destroyed. See [`Documentation/`](Documentation/) for the AWS describe-* evidence of the live deployment.
+> ### Deployed and verified
+>
+> Live ALB + ASG + RDS Multi-AZ stack deployed to AWS on 2026-05-28, captured via `aws describe-*` API across every component (target group health, ASG configuration, RDS Multi-AZ confirmation, NAT Gateway, security groups), then destroyed.
+>
+> See [`Documentation/`](Documentation/) for the live capture evidence and the [Mermaid architecture diagram](Documentation/architecture.md).
 
 ## Repository Tour
 
@@ -64,7 +66,7 @@ The ASG is configured with `vpc_zone_identifier` pointing to both public subnets
 
 ### RDS Multi-AZ
 
-Multi-AZ RDS maintains a synchronous standby replica in the second AZ. During failover, AWS updates the DNS endpoint to point to the standby — no IP change, connection strings stay the same. Promotion typically completes in 60â€“120 seconds.
+Multi-AZ RDS maintains a synchronous standby replica in the second AZ. During failover, AWS updates the DNS endpoint to point to the standby — no IP change, connection strings stay the same. Promotion typically completes in 60–120 seconds.
 
 ### What the User Data Script Does
 
@@ -120,17 +122,17 @@ db_password = "choose-a-strong-password"
 sudo systemctl stop apache2
 ```
 
-ALB removes the instance from the target group within ~30 seconds (2 failed health checks Ã— 15s interval).
+ALB removes the instance from the target group within ~30 seconds (2 failed health checks × 15s interval).
 
 ### Test 3: RDS Failover
 
-From the RDS console: Actions â†’ Reboot with failover. RDS promotes the standby, updates the endpoint DNS. Application reconnects after ~60â€“120 seconds.
+From the RDS console: Actions → Reboot with failover. RDS promotes the standby, updates the endpoint DNS. Application reconnects after ~60–120 seconds.
 
 ## Cost
 
 | Resource | Monthly Cost |
 |----------|-------------|
-| 2Ã— t2.micro EC2 (Free Tier first 12 months) | $0 / ~$17 |
+| 2× t2.micro EC2 (Free Tier first 12 months) | $0 / ~$17 |
 | RDS db.t3.micro Multi-AZ | ~$28 |
 | ALB | ~$18 (base) + $0.008/LCU |
 | NAT Gateway (for private subnets) | ~$32 |
@@ -141,7 +143,7 @@ Run `terraform destroy` when done. This is the most expensive lab — RDS and NA
 ## Production Considerations
 
 - Add CloudFront in front of the ALB for global CDN + DDoS protection
-- Replace RDS MySQL with Aurora (better failover: 30 seconds vs 60â€“120 seconds)
+- Replace RDS MySQL with Aurora (better failover: 30 seconds vs 60–120 seconds)
 - Add WAF to the ALB for OWASP Top 10 protection (critical for healthcare)
 - Replace static EC2 user data with an AMI baked by Packer or a proper config management tool
 - Enable RDS automated backups with point-in-time recovery
