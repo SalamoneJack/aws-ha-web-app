@@ -8,10 +8,8 @@
 
 A production-pattern highly available web application built on AWS: Application Load Balancer + Auto Scaling Group spanning two Availability Zones, with a Multi-AZ RDS instance in private subnets. Demonstrates the core AWS Solutions Architect Associate architecture: design for failure, remove single points of failure, and scale horizontally.
 
-> ### Reference lab — not the active portfolio focus
->
-> This portfolio centers on **network engineering** (BGP, IPSec, VPC topology, observability, reusable VPC modules). `ha-web-app` is included as a reference implementation of the AWS HA pattern any cloud engineer should know, but it isn't the differentiating asset.
->
+> ### Reference lab
+> 
 > Architecture was deployed and verified on 2026-05-28, then destroyed. See [`Documentation/`](Documentation/) for the AWS describe-* evidence of the live deployment.
 
 ## Repository Tour
