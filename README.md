@@ -149,7 +149,7 @@ Run `terraform destroy` when done. This is the most expensive lab — RDS and NA
 - Enable RDS automated backups with point-in-time recovery
 - For HIPAA: enable RDS encryption at rest, enable CloudTrail, store logs in a separate account
 
-## What I Learned
+## Engineering notes
 
 - ALB health checks and ASG health checks are separate — both need to be configured correctly for automatic recovery to work end-to-end
 - RDS Multi-AZ is synchronous replication, not async (like a Read Replica). That's why failover is fast and data loss is zero, but it doubles the cost
